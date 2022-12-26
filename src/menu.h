@@ -15,8 +15,10 @@ private:
 
     static int MainMenu(int *exit_status);  // 'Main' menu logic
     static void PrintMainMenu();  // Print main menu page
-    static void LoadMenu();  // 'Load' menu logic
+    static int LoadMenu();  // 'Load' menu logic
     static void PrintLoadMenu();  // Print load menu page
+    static int CreateMenu();  // 'Create' menu logic
+    static void PrintCreateMenu();
 
     // Utility functions
 
