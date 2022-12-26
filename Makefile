@@ -1,6 +1,6 @@
 TARGET = ./program
 CC = g++
-FLAGS = 
+FLAGS = --std=c++17
 
 SRC = $(wildcard src/*.cpp)
 OBJ = $(patsubst src/%.cpp, src/%.o, $(SRC))
