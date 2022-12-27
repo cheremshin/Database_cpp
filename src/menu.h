@@ -41,6 +41,7 @@ private:
                                       std::vector<int> field_types);
     static int GetType(int *status);
     static void ShowTypes();
+    static std::string TypeToStr(int type);
 
     static void OpenDb(std::string filename, std::fstream &file, Structure structure);
     static void PrintDbMenu(std::string filename);

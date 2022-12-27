@@ -156,6 +156,8 @@ void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure)
     while (status) {
         ClearScreen();
         PrintDbMenu(filename);
+        PrintCurrentStructure(structure.field_names, structure.field_types);
+        std::cout << "\n> ";
 
         int value = StrToInt(GetStr(), &status);
         if (!status) value = -1;
@@ -211,8 +213,6 @@ void Menu::PrintDbMenu(std::string filename) {
                  "|                                  |\n"
                  "|    0. Save and exit              |\n"
                  "+----------------------------------+\n";
-
-    std::cout << "\n> ";
 }
 
 int Menu::CreateMenu() {
@@ -306,7 +306,7 @@ Menu::Structure Menu::GetStructure() {
 void Menu::PrintCurrentStructure(std::vector<std::string> field_names,
                                       std::vector<int> field_types) {
     for (int i = 0; i < field_names.size(); i++) {
-        std::cout << " | " + field_names[i] + "[" + std::to_string(field_types[i]) + "]";
+        std::cout << " | " + field_names[i] + " [" + TypeToStr(field_types[i]) + "]";
     }
     std::cout << " |" << std::endl;
 }
@@ -356,6 +356,34 @@ void Menu::ShowTypes() {
                  "  [6] - string\n";
 
     std::cout << "\n> ";
+}
+
+std::string Menu::TypeToStr(int type) {
+    std::string str = "";
+
+    switch (type)
+    {
+    case VINT:
+        str += "int";
+        break;
+    case VSIZE:
+        str += "size_t";
+        break;
+    case VFLOAT:
+        str += "float";
+        break;
+    case VDOUBLE:
+        str += "double";
+        break;
+    case VCHAR:
+        str += "char";
+        break;
+    case VSTRING:
+        str += "string";
+        break;
+    }
+
+    return str;
 }
 
 void Menu::ClearScreen() {
