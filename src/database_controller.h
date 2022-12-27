@@ -2,6 +2,8 @@
 #define SRC_DATABASE_CONTROLLER_H_
 
 #include <string>
+#include <fstream>
+#include "menu.h"
 
 #ifndef size_t
 #define size_t unsigned long
@@ -28,8 +30,11 @@ class DatabaseController
 {
 private:
     std::string filename;
+    std::fstream idb;
+    std::fstream db;
+    Menu::Structure structure;
 public:
-    DatabaseController(std::string filename);
+    DatabaseController(std::string filename, Menu::Structure structure);
 
     void Print();
     void Insert();
