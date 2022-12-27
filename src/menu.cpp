@@ -34,30 +34,6 @@ void Menu::StartMenuModule() {
     }
 }
 
-std::string Menu::GetStr() {
-    std::string value;
-    std::cin >> value;
-    return value;
-}
-
-int Menu::StrToInt(std::string str, int *status) {
-    int len = str.length();
-    for (int i = 0; i < str.length() / 2; i++) {
-        std::swap(str[i], str[len - i - 1]);
-    }
-
-    int res = 0;
-    for (int i = 0; i < str.length() && *status; i++) {
-        if (isdigit(str[i])) {
-            res += (str[i] - '0') * pow(10, i);
-        } else {
-            *status = 0;
-        }
-    }
-
-    return res;
-}
-
 int Menu::MainMenu(int *exit_status) {
     int current_page = 0;
 
@@ -83,6 +59,30 @@ int Menu::MainMenu(int *exit_status) {
     }
 
     return current_page;
+}
+
+int Menu::StrToInt(std::string str, int *status) {
+    int len = str.length();
+    for (int i = 0; i < str.length() / 2; i++) {
+        std::swap(str[i], str[len - i - 1]);
+    }
+
+    int res = 0;
+    for (int i = 0; i < str.length() && *status; i++) {
+        if (isdigit(str[i])) {
+            res += (str[i] - '0') * pow(10, i);
+        } else {
+            *status = 0;
+        }
+    }
+
+    return res;
+}
+
+std::string Menu::GetStr() {
+    std::string value;
+    std::cin >> value;
+    return value;
 }
 
 void Menu::PrintMainMenu() {
@@ -160,7 +160,7 @@ void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure)
         int value = StrToInt(GetStr(), &status);
         if (!status) value = -1;
 
-        auto db = DatabaseController(filename);
+        auto db = DatabaseController(filename, structure);
 
         switch (value)
         {
@@ -170,13 +170,13 @@ void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure)
             db.Print();
             break;
         case 2:
-            db.Insert();
+            // db.Insert();
             break;
         case 3:
-            db.Delete();
+            // db.Delete();
             break;
         case 4:
-            db.Search();
+            // db.Search();
             break;
         default:
             break;
@@ -189,11 +189,15 @@ void Menu::PrintDbMenu(std::string filename) {
                  "|             Database             |\n"
                  "+----------------------------------+\n"
                  "|";
-    for (int i = 0; i < 17 - filename.length() / 2; i++) {
+
+    int half_len = filename.length() / 2;
+    for (int i = 0; i < 17 - half_len; i++) {
         std::cout << " ";
     }
     std::cout << filename;
-    for (int i = 17 + filename.length() / 2; i < 34; i++) {
+
+    half_len = (filename.length() % 2) ? half_len : half_len - 1;
+    for (int i = 17 + half_len + 1; i < 34; i++) {
         std::cout << " ";
     }
 
@@ -254,10 +258,12 @@ Menu::Structure Menu::GetStructure() {
 
     field_names.push_back("id");
     field_types.push_back(VSTRING);
-    PrintCurrentStructure(field_names, field_types);
 
     int status = 1;
     while (status) {
+        ClearScreen();
+        PrintCurrentStructure(field_names, field_types);
+
         std::cout << "\nEnter field name"
                      "\n> ";
         field_names.push_back(GetStr());
@@ -266,11 +272,10 @@ Menu::Structure Menu::GetStructure() {
         int type = GetType(&status);
         if (status) {
             field_types.push_back(type);
-            PrintCurrentStructure(field_names, field_types);
 
-            std::cout << "Add another one?\n"
-                         "1. Yes\n"
-                         "2. No\n"
+            std::cout << "\nAdd another one?\n"
+                         "    1. Yes\n"
+                         "    2. No\n"
                          "\n> ";
             int value = StrToInt(GetStr(), &status);
             if (!status) value = 0;

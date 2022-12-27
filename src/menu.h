@@ -1,8 +1,11 @@
 #ifndef SRC_MENU_H_
 #define SRC_MENU_H_
 
+#include <stdio.h>
 #include <vector>
 #include <string>
+
+// #define tc_move_cursor(X, Y) printf("\033[%d;%dH", Y, X);
 
 class Menu
 {
@@ -15,6 +18,8 @@ public:
         std::vector<int> field_types;
     }; 
 private:
+    // const int window_width = 36;
+    // const int margin_top = 5;
     // Input functions
 
     static std::string GetStr();
