@@ -17,6 +17,13 @@
 #define VSTRING    0b00100000
 
 
+// Exist indicators: represents row status (is it deleted)
+
+// Row availiable
+#define EXIST      0b0
+// Row deleted
+#define DEL        0b1
+
 struct TmpMemory {
     int v_int;
     size_t v_size_t;
@@ -33,13 +40,30 @@ private:
     std::fstream idb;
     std::fstream db;
     Menu::Structure structure;
+
+    void WriteFieldValue(std::fstream& file, TmpMemory mem, int type);
+    TmpMemory ReadFieldValue(std::fstream& file, int type);
+    void PrintFieldValue(TmpMemory mem, int type);
 public:
     DatabaseController(std::string filename, Menu::Structure structure);
 
-    void Print();
-    void Insert();
-    void Delete();
-    void Search();
+    // Prints the rows of the database in the amount of "count" 
+    // (if 0, then the entire database)
+    void Print(int count);
+
+    // Adds a record from a prepared temporary file
+    // Structure: [id_len][id][type](string len)[value]...
+    void Insert(std::fstream& input);
+
+    // Marks a record with the matching "id" as deleted 
+    // (will be deleted when the database is closed)
+    // return values: 0 - not found, 1 - deleted
+    int Delete(std::string id);
+
+    // Search for a record with matching "id"
+    // If found, set seek to "seek" pointer
+    // return value: seek in file
+    int Search(std::string id, size_t *seek);
 };
 
 #endif  // SRC_DATABASE_CONTROLLER_H_
