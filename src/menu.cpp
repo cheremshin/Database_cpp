@@ -114,10 +114,9 @@ int Menu::LoadMenu() {
     if (value == 0) {
         current_page = 0;
     } else if (value > 0 && value <= db_list.size()) {
-        std::fstream file = file_handler.OpenRead("databases/" + db_list[value] + ".cdb");
+        std::fstream file = file_handler.OpenRead("databases/" + db_list[value - 1] + ".cdb");
         Structure structure = file_handler.ReadStructure(file);
-        PrintCurrentStructure(structure.field_names, structure.field_types);
-
+        OpenDb(db_list[value - 1], file, structure);
         file.close();
     }
 
@@ -147,6 +146,66 @@ void Menu::PrintLoadMenu(std::vector<std::string> db_list) {
     std::cout << "|                                  |\n"
                  "|    0. Back                       |\n"
                  "|                                  |\n"
+                 "+----------------------------------+\n";
+
+    std::cout << "\n> ";
+}
+
+void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure) {
+    int status = 1;
+    while (status) {
+        ClearScreen();
+        PrintDbMenu(filename);
+
+        int value = StrToInt(GetStr(), &status);
+        if (!status) value = -1;
+
+        auto db = DatabaseController(filename);
+
+        switch (value)
+        {
+        case 0:
+            status = 0;
+        case 1:
+            db.Print();
+            break;
+        case 2:
+            db.Insert();
+            break;
+        case 3:
+            db.Delete();
+            break;
+        case 4:
+            db.Search();
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+void Menu::PrintDbMenu(std::string filename) {
+    std::cout << "+----------------------------------+\n"
+                 "|             Database             |\n"
+                 "+----------------------------------+\n"
+                 "|";
+    for (int i = 0; i < 17 - filename.length() / 2; i++) {
+        std::cout << " ";
+    }
+    std::cout << filename;
+    for (int i = 17 + filename.length() / 2; i < 34; i++) {
+        std::cout << " ";
+    }
+
+
+    std::cout << "|\n";
+    std::cout << "+----------------------------------+\n"
+                 "|    1. Print                      |\n"
+                 "|    2. Insert                     |\n"
+                 "|    3. Delete                     |\n"
+                 "|    4. Search                     |\n"
+                 "|                                  |\n"
+                 "|    0. Save and exit              |\n"
                  "+----------------------------------+\n";
 
     std::cout << "\n> ";

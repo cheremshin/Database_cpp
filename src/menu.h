@@ -23,8 +23,10 @@ private:
 
     static int MainMenu(int *exit_status);  // 'Main' menu logic
     static void PrintMainMenu();  // Print main menu page
+
     static int LoadMenu();  // 'Load' menu logic
     static void PrintLoadMenu(std::vector<std::string> db_list);  // Print load menu page
+
     static int CreateMenu();  // 'Create' menu logic
     static void PrintCreateMenu();  // Print create menu page
     static void PrintChoosingFields();
@@ -34,6 +36,9 @@ private:
                                       std::vector<int> field_types);
     static int GetType(int *status);
     static void ShowTypes();
+
+    static void OpenDb(std::string filename, std::fstream &file, Structure structure);
+    static void PrintDbMenu(std::string filename);
 
     // Utility functions
 
