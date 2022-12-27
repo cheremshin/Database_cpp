@@ -156,6 +156,7 @@ void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure)
     while (status) {
         ClearScreen();
         PrintDbMenu(filename);
+        std::cout << "\n";
         PrintCurrentStructure(structure.field_names, structure.field_types);
         std::cout << "\n> ";
 
@@ -169,7 +170,7 @@ void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure)
         case 0:
             status = 0;
         case 1:
-            db.Print();
+            // db.Print();
             break;
         case 2:
             // db.Insert();
