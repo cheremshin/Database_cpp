@@ -1,5 +1,9 @@
 #include <iostream>
+#include <math.h>
+#include <fstream>
 #include "menu.h"
+#include "file_handler.h"
+#include "database_controller.h"
 
 void Menu::StartMenuModule() {
     int exit_status = 0;
@@ -30,17 +34,38 @@ void Menu::StartMenuModule() {
     }
 }
 
-int Menu::GetInt() {
-    int value;
+std::string Menu::GetStr() {
+    std::string value;
     std::cin >> value;
     return value;
+}
+
+int Menu::StrToInt(std::string str, int *status) {
+    int len = str.length();
+    for (int i = 0; i < str.length() / 2; i++) {
+        std::swap(str[i], str[len - i - 1]);
+    }
+
+    int res = 0;
+    for (int i = 0; i < str.length() && *status; i++) {
+        if (isdigit(str[i])) {
+            res += (str[i] - '0') * pow(10, i);
+        } else {
+            *status = 0;
+        }
+    }
+
+    return res;
 }
 
 int Menu::MainMenu(int *exit_status) {
     int current_page = 0;
 
     PrintMainMenu();
-    int value = GetInt();
+
+    int status = 1;
+    int value = StrToInt(GetStr(), &status);
+    if (!status) value = -1;
 
     switch (value)
     {
@@ -50,7 +75,7 @@ int Menu::MainMenu(int *exit_status) {
     case 2:
         current_page = 2;
         break;
-    case 3:
+    case 0:
         *exit_status = 1;
         break;
     default:
@@ -67,7 +92,7 @@ void Menu::PrintMainMenu() {
                  "|                                  |\n"
                  "|    1. Load database              |\n"
                  "|    2. Create new database        |\n"
-                 "|    3. Exit                       |\n"
+                 "|    0. Exit                       |\n"
                  "|                                  |\n"
                  "+----------------------------------+\n";
 
@@ -77,17 +102,29 @@ void Menu::PrintMainMenu() {
 int Menu::LoadMenu() {
     int current_page = 1;
 
-    PrintLoadMenu();
-    int value = GetInt();
+    FileHandler file_handler = FileHandler{};
+    auto db_list = file_handler.GetList();
+
+    PrintLoadMenu(db_list);
+    
+    int status = 1;
+    int value = StrToInt(GetStr(), &status);
+    if (!status) value = -1;
 
     if (value == 0) {
         current_page = 0;
+    } else if (value > 0 && value <= db_list.size()) {
+        std::fstream file = file_handler.OpenRead("databases/" + db_list[value] + ".cdb");
+        Structure structure = file_handler.ReadStructure(file);
+        PrintCurrentStructure(structure.field_names, structure.field_types);
+
+        file.close();
     }
 
     return current_page;
 }
 
-void Menu::PrintLoadMenu() {
+void Menu::PrintLoadMenu(std::vector<std::string> db_list) {
     std::cout << "+----------------------------------+\n"
                  "|             Database             |\n"
                  "+----------------------------------+\n"
@@ -95,9 +132,17 @@ void Menu::PrintLoadMenu() {
                  "+----------------------------------+\n"
                  "|                                  |\n";
 
-
-    std::cout << "DB list\n";  // Debug
-
+    if (db_list.size() == 0) {
+        std::cout << "|        No databases found        |\n";
+    } else {
+        for (int i = 0; i < db_list.size(); i++) {
+            std::cout << "|    " << i + 1 << ". " << db_list[i];
+            for (int j = 0; j < 27 - db_list[i].length(); j++) {
+                std::cout << " ";
+            }
+            std::cout << "|\n";
+        }
+    }
 
     std::cout << "|                                  |\n"
                  "|    0. Back                       |\n"
@@ -109,13 +154,20 @@ void Menu::PrintLoadMenu() {
 
 int Menu::CreateMenu() {
     int current_page = 2;
+    FileHandler file_handler = FileHandler{};
 
     PrintCreateMenu();
-    int value = GetInt();
+    
+    std::string filename = GetStr();
+    std::fstream file = file_handler.OpenWrite("databases/" + filename + ".cdb");
 
-    if (value == 0) {
-        current_page = 0;
-    }
+    PrintChoosingFields();
+    Structure structure = GetStructure();
+    file_handler.WriteStructure(file, structure);
+
+    file.close();
+
+    current_page = 0;
 
     return current_page;
 }
@@ -129,6 +181,117 @@ void Menu::PrintCreateMenu() {
 
     std::cout << "\nType database name"
                  "\n> ";
+}
+
+void Menu::PrintChoosingFields() {
+    std::cout << "\n+----------------------------------+\n"
+                 "|         Chooosing fields         |\n"
+                 "+----------------------------------+\n";
+}
+
+Menu::Structure Menu::GetStructure() {
+    std::vector<std::string> field_names;
+    std::vector<int> field_types;
+
+    field_names.push_back("id");
+    field_types.push_back(VSTRING);
+    PrintCurrentStructure(field_names, field_types);
+
+    int status = 1;
+    while (status) {
+        std::cout << "\nEnter field name"
+                     "\n> ";
+        field_names.push_back(GetStr());
+
+
+        int type = GetType(&status);
+        if (status) {
+            field_types.push_back(type);
+            PrintCurrentStructure(field_names, field_types);
+
+            std::cout << "Add another one?\n"
+                         "1. Yes\n"
+                         "2. No\n"
+                         "\n> ";
+            int value = StrToInt(GetStr(), &status);
+            if (!status) value = 0;
+
+            switch (value)
+            {
+            case 1:
+                break;
+            case 2:
+            default:
+                status = 0;
+                break;
+            }
+        } else {
+            field_names.pop_back();
+            std::cout << "Wrong type\n";
+            status = 1;
+        }
+    }
+
+    Structure structure = Structure{};
+    structure.field_names = field_names;
+    structure.field_types = field_types;
+
+    return structure;
+}
+
+void Menu::PrintCurrentStructure(std::vector<std::string> field_names,
+                                      std::vector<int> field_types) {
+    for (int i = 0; i < field_names.size(); i++) {
+        std::cout << " | " + field_names[i] + "[" + std::to_string(field_types[i]) + "]";
+    }
+    std::cout << " |" << std::endl;
+}
+
+int Menu::GetType(int *status) {
+    ShowTypes();
+    std::string str = GetStr();
+    int value = StrToInt(str, status);
+
+    int result = 0;
+    if (*status) {
+        switch (value)
+        {
+        case 1:
+            result = VINT;
+            break;
+        case 2:
+            result = VSIZE;
+            break;
+        case 3:
+            result = VFLOAT;
+            break;
+        case 4:
+            result = VDOUBLE;
+            break;
+        case 5:
+            result = VCHAR;
+            break;
+        case 6:
+            result = VSTRING;
+            break;
+        default:
+            *status = 0;
+            break;
+        }
+    }
+
+    return result;
+}
+
+void Menu::ShowTypes() {
+    std::cout << "\n  [1] - int\n"
+                 "  [2] - size_t\n"
+                 "  [3] - float\n"
+                 "  [4] - double\n"
+                 "  [5] - char\n"
+                 "  [6] - string\n";
+
+    std::cout << "\n> ";
 }
 
 void Menu::ClearScreen() {
