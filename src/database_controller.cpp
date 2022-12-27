@@ -2,16 +2,32 @@
 #include <fstream>
 #include <filesystem>
 #include "database_controller.h"
+#include "file_handler.h"
 
 DatabaseController::DatabaseController(std::string filename, Menu::Structure structure) {
-    if (!std::filesystem::exists("databases/" + filename + ".idb")) {
-        this->idb = std::fstream("databases/" + filename + ".idb",
-                              std::ios::binary | std::ios::in | std::ios::out);
+    auto file_handler = FileHandler{};
+
+    std::string index_file = "databases/" + filename + ".idb";
+    std::string db_file = "databases/" + filename + ".db";
+
+    if (!std::filesystem::exists(index_file)) {
+        auto tmp = file_handler.OpenWrite(index_file);
+        tmp.close();
+    
+        this->idb = std::fstream{index_file,
+                              std::ios::binary |
+                              std::ios::in |
+                              std::ios::out};
     }
 
-    if (!std::filesystem::exists("databases/" + filename + ".db")) {
-        this->db = std::fstream("databases/" + filename + ".db",
-                               std::ios::binary | std::ios::in | std::ios::out);
+    if (!std::filesystem::exists(db_file)) {
+        auto tmp = file_handler.OpenWrite(db_file);
+        tmp.close();
+
+        this->db = std::fstream{db_file,
+                                std::ios::binary |
+                                std::ios::in |
+                                std::ios::out};
     }
 
     this->structure = structure;
