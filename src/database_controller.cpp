@@ -121,6 +121,8 @@ int DatabaseController::Print(int count) {
     idb.seekg(0, std::ios::beg);
     db.seekg(0, std::ios::beg);
 
+    if (FileHandler::IsEmpty(idb)) status = 0;
+
     while (!idb.eof() && status) {
         auto mem = ReadFieldValue(idb, VCHAR);  // Get exist indicator
         char ex = mem.v_char;
