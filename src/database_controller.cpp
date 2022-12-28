@@ -93,6 +93,75 @@ TmpMemory DatabaseController::ReadFieldValue(std::fstream& file, int type) {
     return mem;
 }
 
+TmpMemory DatabaseController::ReadFieldValue(std::vector<char> input, int *offset, int type) {
+    auto mem = TmpMemory{};
+
+    switch (type) {
+    case VINT: {
+            char bytes[sizeof(int)];
+            for (int i = 0; i < sizeof(int); i++) {
+                bytes[i] = input[*offset + i];
+            }
+            int *tmp = (int *)bytes;
+            mem.v_int = *tmp;
+            *offset += sizeof(int);
+            break;
+        }
+    case VSIZE: {
+            char bytes[sizeof(size_t)];
+            for (int i = 0; i < sizeof(size_t); i++) {
+                bytes[i] = input[*offset + i];
+            }
+            size_t *tmp = (size_t *)bytes;
+            mem.v_size_t = *tmp;
+            *offset += sizeof(size_t);
+            break;
+        }
+    case VFLOAT: {
+            char bytes[sizeof(float)];
+            for (int i = 0; i < sizeof(float); i++) {
+                bytes[i] = input[*offset + i];
+            }
+            float *tmp = (float *)bytes;
+            mem.v_float = *tmp;
+            *offset += sizeof(float);
+            break;
+        }
+    case VDOUBLE: {
+            char bytes[sizeof(double)];
+            for (int i = 0; i < sizeof(double); i++) {
+                bytes[i] = input[*offset + i];
+            }
+            double *tmp = (double *)bytes;
+            mem.v_double = *tmp;
+            *offset += sizeof(double);
+            break;
+        }
+    case VCHAR: {
+            mem.v_char = input[*offset];
+            *offset += sizeof(char);
+            break;
+        }
+    case VSTRING: {
+            char bytes[sizeof(size_t)];
+            for (int i = 0; i < sizeof(size_t); i++) {
+                bytes[i] = input[*offset + i];
+            }
+            size_t *tmp = (size_t *)bytes;
+            mem.v_size_t = *tmp;
+            *offset += sizeof(size_t);
+
+            mem.v_string = "";
+            for (int i = 0; i < mem.v_size_t; i++) {
+                mem.v_string += input[*offset + i];
+            }
+            *offset += mem.v_size_t * sizeof(char);
+        }
+    }
+
+    return mem;
+}
+
 void DatabaseController::PrintFieldValue(TmpMemory mem, int type) {
     switch (type) {
     case VINT:
@@ -158,8 +227,8 @@ int DatabaseController::Print(int count) {
     return row;
 }
 
-void DatabaseController::Insert(std::fstream& input) {
-    input.seekg(0, std::ios::beg);
+void DatabaseController::Insert(std::vector<char> input) {
+    int offset = 0;  // Input offset
     idb.seekg(0, std::ios::end);
     db.seekg(0, std::ios::end);
 
@@ -168,16 +237,16 @@ void DatabaseController::Insert(std::fstream& input) {
     TmpMemory mem = TmpMemory{};
     mem.v_char = EXIST;
     WriteFieldValue(idb, mem, VCHAR);
-    WriteFieldValue(db, mem, VCHAR);
+    offset++;
 
-    mem = ReadFieldValue(input, VSTRING);
+    mem = ReadFieldValue(input, &offset, VSTRING);
     WriteFieldValue(idb, mem, VSTRING);
     WriteFieldValue(db, mem, VSTRING);
     mem.v_size_t = seek;
     WriteFieldValue(idb, mem, VSIZE);
 
     for (int i = 0; i < structure.field_types.size() - 1; i++) {
-        mem = ReadFieldValue(input, structure.field_types[i]);
+        mem = ReadFieldValue(input, &offset, structure.field_types[i]);
         WriteFieldValue(db, mem, structure.field_types[i]);
     }
 }

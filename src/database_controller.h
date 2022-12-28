@@ -31,6 +31,7 @@ struct TmpMemory {
     double v_double;
     char v_char;
     std::string v_string;
+    std::vector<char> input;
 };
 
 class DatabaseController
@@ -43,6 +44,7 @@ private:
 
     void WriteFieldValue(std::fstream& file, TmpMemory mem, int type);
     TmpMemory ReadFieldValue(std::fstream& file, int type);
+    TmpMemory ReadFieldValue(std::vector<char> input, int *offset, int type);
     void PrintFieldValue(TmpMemory mem, int type);
 public:
     DatabaseController(std::string filename, Structure structure);
@@ -54,7 +56,7 @@ public:
 
     // Adds a record from a prepared temporary file
     // Structure: [id_len][id][type](string len)[value]...
-    void Insert(std::fstream& input);
+    void Insert(std::vector<char> input);
 
     // Marks a record with the matching "id" as deleted 
     // (will be deleted when the database is closed)
