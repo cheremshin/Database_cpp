@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
+#include "common.h"
 #include "database_controller.h"
 
 // #define tc_move_cursor(X, Y) printf("\033[%d;%dH", Y, X);
@@ -13,11 +14,6 @@ class Menu
 public:
     /* Starts menu program */
     static void StartMenuModule();
-
-    struct Structure {
-        std::vector<std::string> field_names;
-        std::vector<int> field_types;
-    }; 
 private:
     // const int window_width = 36;
     // const int margin_top = 5;

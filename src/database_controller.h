@@ -3,7 +3,7 @@
 
 #include <string>
 #include <fstream>
-#include "menu.h"
+#include "common.h"
 
 #ifndef size_t
 #define size_t unsigned long
@@ -39,13 +39,13 @@ private:
     std::string filename;
     std::fstream idb;
     std::fstream db;
-    Menu::Structure structure;
+    Structure structure;
 
     void WriteFieldValue(std::fstream& file, TmpMemory mem, int type);
     TmpMemory ReadFieldValue(std::fstream& file, int type);
     void PrintFieldValue(TmpMemory mem, int type);
 public:
-    DatabaseController(std::string filename, Menu::Structure structure);
+    DatabaseController(std::string filename, Structure structure);
 
     // Prints the rows of the database in the amount of "count" 
     // (if 0, then the entire database)

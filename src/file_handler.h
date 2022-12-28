@@ -5,7 +5,7 @@
 #include <vector>
 #include <fstream>
 
-#include "menu.h"
+#include "common.h"
 
 class FileHandler
 {
@@ -22,8 +22,8 @@ public:
     std::fstream OpenRead(std::string filename);
     std::fstream OpenWrite(std::string filename);
 
-    void WriteStructure(std::fstream &file, Menu::Structure structure);
-    Menu::Structure ReadStructure(std::fstream &file);
+    void WriteStructure(std::fstream &file, Structure structure);
+    Structure ReadStructure(std::fstream &file);
 };
 
 #endif  // SRC_FILE_HANDLER_H_

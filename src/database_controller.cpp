@@ -4,7 +4,7 @@
 #include "database_controller.h"
 #include "file_handler.h"
 
-DatabaseController::DatabaseController(std::string filename, Menu::Structure structure) {
+DatabaseController::DatabaseController(std::string filename, Structure structure) {
     auto file_handler = FileHandler{};
 
     std::string index_file = "databases/" + filename + ".idb";

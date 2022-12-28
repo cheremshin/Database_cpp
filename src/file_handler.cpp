@@ -43,7 +43,7 @@ std::fstream FileHandler::OpenWrite(std::string filename) {
     return out;
 }
 
-void FileHandler::WriteStructure(std::fstream &file, Menu::Structure structure) {
+void FileHandler::WriteStructure(std::fstream &file, Structure structure) {
     size_t len = structure.field_names.size();
     file.write((char *)&len, sizeof(size_t));
 
@@ -60,8 +60,8 @@ void FileHandler::WriteStructure(std::fstream &file, Menu::Structure structure) 
     }
 }
 
-Menu::Structure FileHandler::ReadStructure(std::fstream &file) {
-    auto structure = Menu::Structure{};
+Structure FileHandler::ReadStructure(std::fstream &file) {
+    auto structure = Structure{};
     int len = 0;
 
     file.read((char *)&len, sizeof(size_t));

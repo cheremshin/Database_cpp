@@ -31,6 +31,8 @@ void Menu::StartMenuModule() {
             break;
         }
     }
+
+    ClearScreen();
 }
 
 int Menu::MainMenu(int *exit_status) {
@@ -272,7 +274,7 @@ void Menu::PrintChoosingFields() {
                  "+----------------------------------+\n";
 }
 
-Menu::Structure Menu::GetStructure() {
+Structure Menu::GetStructure() {
     std::vector<std::string> field_names;
     std::vector<int> field_types;
 
