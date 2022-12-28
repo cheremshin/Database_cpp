@@ -86,3 +86,7 @@ Structure FileHandler::ReadStructure(std::fstream &file) {
 
     return structure;
 }
+
+bool FileHandler::IsEmpty(std::fstream &file) {
+    return file.peek() == std::fstream::traits_type::eof();
+}

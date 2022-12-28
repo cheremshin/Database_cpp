@@ -24,6 +24,8 @@ public:
 
     void WriteStructure(std::fstream &file, Structure structure);
     Structure ReadStructure(std::fstream &file);
+
+    static bool IsEmpty(std::fstream &file);
 };
 
 #endif  // SRC_FILE_HANDLER_H_
