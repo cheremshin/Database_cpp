@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
+#include "database_controller.h"
 
 // #define tc_move_cursor(X, Y) printf("\033[%d;%dH", Y, X);
 
@@ -43,8 +44,12 @@ private:
     static void ShowTypes();
     static std::string TypeToStr(int type);
 
+    // Db menu section
+
     static void OpenDb(std::string filename, std::fstream &file, Structure structure);
     static void PrintDbMenu(std::string filename);
+
+    static void PrintingSection(DatabaseController db);
 
     // Utility functions
 

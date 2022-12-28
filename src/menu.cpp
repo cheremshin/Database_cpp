@@ -3,7 +3,6 @@
 #include <fstream>
 #include "menu.h"
 #include "file_handler.h"
-#include "database_controller.h"
 
 void Menu::StartMenuModule() {
     int exit_status = 0;
@@ -184,6 +183,8 @@ void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure)
         default:
             break;
         }
+
+        char c = getc(stdin);  // Pause before screen render
     }
 }
 
@@ -215,6 +216,24 @@ void Menu::PrintDbMenu(std::string filename) {
                  "|    0. Save and exit              |\n"
                  "+----------------------------------+\n";
 }
+
+void Menu::PrintingSection(DatabaseController db) {
+    int status = 1;
+    while (status) {
+        ClearScreen();
+        std::cout << "\nEnter number of rows to print\n"
+                     "('0' - print all)\n";
+        std::cout << "\n> ";
+
+        int value = StrToInt(GetStr(), &status);
+        if (!status) value = -1;
+
+        if (value >= 0) {
+            db.Print(value);
+        }
+    }
+}
+
 
 int Menu::CreateMenu() {
     int current_page = 2;

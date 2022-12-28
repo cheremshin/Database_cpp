@@ -62,7 +62,7 @@ public:
 
     // Search for a record with matching "id"
     // If found, set seek to "seek" pointer
-    // return value: seek in file
+    // return value: 0 - not found, 1 - found
     int Search(std::string id, size_t *seek);
 };
 
