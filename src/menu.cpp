@@ -86,6 +86,35 @@ std::string Menu::GetStr() {
     return value;
 }
 
+template<typename T>
+T Menu::GetValue() {
+    T value;
+    std::cin >> value;
+}
+
+template<typename T>
+void Menu::GetByteArray(int type, T value, char *bytes[]) {
+
+}
+
+template<typename T>
+void Menu::PushByteArray(int type, std::vector<char> *input) {
+    char *t = new char[sizeof(int)];
+    GetByteArray<int>(VINT, VINT, &t);
+    for (int i = 0; i < sizeof(int); i++) {
+        (*input).push_back(t[i]);
+    }
+    delete type;
+
+    char *bytes = new char[sizeof(T)];
+    T value = GetValue<T>();
+    GetByteArray<T>(type, value, &bytes);
+    for (int i = 0; i < sizeof(T); i++) {
+        (*input).push_back(bytes[i]);
+    }
+    delete bytes;
+}
+
 void Menu::PrintMainMenu() {
     std::cout << "+----------------------------------+\n"
                  "|             Database             |\n"
@@ -170,11 +199,12 @@ void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure)
         {
         case 0:
             status = 0;
+            break;
         case 1:
             PrintingSection(db);
             break;
         case 2:
-            // db.Insert();
+            InsertingSection(db, structure);
             break;
         case 3:
             // db.Delete();
@@ -221,6 +251,7 @@ void Menu::PrintDbMenu(std::string filename) {
 
 void Menu::PrintingSection(DatabaseController & db) {
     int status = 1;
+
     ClearScreen();
     std::cout << "\nEnter number of rows to print\n"
                     "('0' - print all)\n";
@@ -240,6 +271,52 @@ void Menu::PrintingSection(DatabaseController & db) {
     }
 
     std::cout << "\nPress any key to get back\n> ";
+    char ch = getc(stdin);
+}
+
+void Menu::InsertingSection(DatabaseController & db, Structure structure) {
+    int status = 1;
+    std::vector<char> input;
+
+    ClearScreen();
+    for (int i = 0; i < structure.field_types.size(); i++) {
+        std::cout << structure.field_names[i] << ":\n> ";
+
+        int type = structure.field_types[i];
+        switch (type)
+        {
+        case VINT: {
+                PushByteArray<int>(VINT, &input);
+                break;
+            }
+        case VSIZE: {
+                PushByteArray<size_t>(VSIZE, &input);
+                break;
+            }
+        case VFLOAT: {
+                PushByteArray<float>(VFLOAT, &input);
+                break;
+            }
+        case VDOUBLE: {
+                PushByteArray<double>(VDOUBLE, &input);
+                break;
+            }
+        case VCHAR: {
+                char value = GetValue<char>();
+                input.push_back(value);
+            }
+        case VSTRING: {
+                std::string bytes = GetValue<std::string>();
+                for (int j = 0; j < bytes.length(); j++) {
+                    input.push_back(bytes[i]);
+                }
+            }
+        }
+    }
+
+    
+
+    std::cout << "\nPress any key to continue";
     char ch = getc(stdin);
 }
 

@@ -20,6 +20,17 @@ private:
     // Input functions
 
     static std::string GetStr();
+    
+    // Preparing "input" for insert DBController method 
+
+    template<typename T>
+    static T GetValue();
+
+    template<typename T>
+    static void GetByteArray(int type, T value, char *bytes[]);
+
+    template<typename T>
+    static void PushByteArray(int type, std::vector<char> *input);
 
     // Menu pages
 
@@ -46,6 +57,7 @@ private:
     static void PrintDbMenu(std::string filename);
 
     static void PrintingSection(DatabaseController & db);
+    static void InsertingSection(DatabaseController & db, Structure structure);
 
     // Utility functions
 
