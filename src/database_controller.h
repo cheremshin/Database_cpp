@@ -24,6 +24,8 @@
 // Row deleted
 #define DEL        0b1
 
+#define BLOCK_SIZE 1024
+
 struct TmpMemory {
     int v_int;
     size_t v_size_t;
@@ -46,6 +48,7 @@ private:
     TmpMemory ReadFieldValue(std::fstream& file, int type);
     TmpMemory ReadFieldValue(std::vector<char> input, int *offset, int type);
     void PrintFieldValue(TmpMemory mem, int type);
+    size_t GetSize(int type);
 public:
     DatabaseController(std::string filename, Structure structure);
 
@@ -66,7 +69,7 @@ public:
     // Search for a record with matching "id"
     // If found, set seek to "seek" pointer
     // return value: 0 - not found, 1 - found
-    int Search(std::string id, size_t *seek);
+    int Search(std::string id, size_t *i_seek, size_t *db_seek);
 };
 
 #endif  // SRC_DATABASE_CONTROLLER_H_

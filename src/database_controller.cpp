@@ -13,22 +13,22 @@ DatabaseController::DatabaseController(std::string filename, Structure structure
     if (!std::filesystem::exists(index_file)) {
         auto tmp = file_handler.OpenWrite(index_file);
         tmp.close();
-    
-        this->idb = std::fstream{index_file,
-                              std::ios::binary |
-                              std::ios::in |
-                              std::ios::out};
     }
 
     if (!std::filesystem::exists(db_file)) {
         auto tmp = file_handler.OpenWrite(db_file);
         tmp.close();
-
-        this->db = std::fstream{db_file,
-                                std::ios::binary |
-                                std::ios::in |
-                                std::ios::out};
     }
+
+    this->idb = std::fstream{index_file,
+                             std::ios::binary |
+                             std::ios::in |
+                             std::ios::out};
+
+    this->db = std::fstream{db_file,
+                            std::ios::binary |
+                            std::ios::in |
+                            std::ios::out};
 
     this->structure = structure;
 }
@@ -185,6 +185,29 @@ void DatabaseController::PrintFieldValue(TmpMemory mem, int type) {
     }
 }
 
+size_t DatabaseController::GetSize(int type) {
+    size_t size = 0;
+
+    switch (type)
+    {
+    case VCHAR:
+        size = 1UL;
+        break;
+    case VINT:
+    case VFLOAT:
+        size = 4UL;
+        break;
+    case VSIZE:
+    case VDOUBLE:
+        size = 8UL;
+        break;
+    case VSTRING:
+        size = 32UL;
+    }
+
+    return size;
+}
+
 int DatabaseController::Print(int count) {
     int status = 1, row = 0;
     idb.seekg(0, std::ios::beg);
@@ -288,24 +311,46 @@ int DatabaseController::Delete(std::string id) {
     return status;
 }
 
-int DatabaseController::Search(std::string id, size_t *seek) {
-    int status = 0, found = 0;
+int DatabaseController::Search(std::string id, size_t *i_seek, size_t *db_seek) {
+    int status = 0, inside = 0;
+    size_t seek = 0, size = 0;
+
+    for (int i = 0; i < structure.field_types.size(); i++) {
+        size += GetSize(structure.field_types[i]);
+    }
 
     idb.seekg(0, std::ios::beg);
+    while (!idb.eof() && !inside) {
+        seek += BLOCK_SIZE * size;
+        idb.seekg(static_cast<std::streampos>(seek));
 
-    while (!idb.eof() && !found) {
         auto mem = ReadFieldValue(idb, VCHAR);
         mem = ReadFieldValue(idb, VSTRING);
-        mem = ReadFieldValue(idb, VSIZE);
+
+        if (Encoder::Decode(mem.v_string) >= Encoder::Encode(id)) {
+            inside = 1;
+        }
+    }
+
+    seek -= BLOCK_SIZE * size;
+    idb.seekg(static_cast<std::streampos>(seek));
+
+    std::vector<char> input;
+    GetBlock(BLOCK_SIZE * size, &input);
+
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        size_t offset = 0;
+        auto mem = ReadFieldValue(input, &offset, VCHAR);
+        mem = ReadFieldValue(input, &offset, VSTRING);
+        mem = ReadFieldValue(input, &offset, VSIZE);
 
         if ((mem.v_char == EXIST) &&
             (mem.v_string == id)) {
             found = 1;
-            *seek = mem.v_size_t;
+            *db_seek = mem.v_size_t;
+            *i_seek = seek + i * size;
         }
     }
-
-    if (found) status = 1;
 
     return status;
 }
