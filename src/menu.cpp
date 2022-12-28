@@ -164,14 +164,14 @@ void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure)
         int value = StrToInt(GetStr(), &status);
         if (!status) value = -1;
 
-        auto db = DatabaseController(filename, structure);
+        DatabaseController db = DatabaseController(filename, structure);
 
         switch (value)
         {
         case 0:
             status = 0;
         case 1:
-            // db.Print();
+            PrintingSection(db);
             break;
         case 2:
             // db.Insert();
@@ -219,23 +219,29 @@ void Menu::PrintDbMenu(std::string filename) {
                  "+----------------------------------+\n";
 }
 
-void Menu::PrintingSection(DatabaseController db) {
+void Menu::PrintingSection(DatabaseController & db) {
     int status = 1;
-    while (status) {
-        ClearScreen();
-        std::cout << "\nEnter number of rows to print\n"
-                     "('0' - print all)\n";
-        std::cout << "\n> ";
+    ClearScreen();
+    std::cout << "\nEnter number of rows to print\n"
+                    "('0' - print all)\n";
+    std::cout << "\n> ";
 
-        int value = StrToInt(GetStr(), &status);
-        if (!status) value = -1;
+    int value = StrToInt(GetStr(), &status);
+    if (!status) value = -1;
 
-        if (value >= 0) {
-            db.Print(value);
+    if (value >= 0) {
+        int read_rows = db.Print(value);
+
+        if (read_rows == 0) {
+            std::cout << "\nDatabase is empty\n";
         }
+    } else {
+        std::cout << "\nIncorrect value\n";
     }
-}
 
+    std::cout << "\nPress any key to get back\n> ";
+    char ch = getc(stdin);
+}
 
 int Menu::CreateMenu() {
     int current_page = 2;

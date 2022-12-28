@@ -45,7 +45,7 @@ private:
     static void OpenDb(std::string filename, std::fstream &file, Structure structure);
     static void PrintDbMenu(std::string filename);
 
-    static void PrintingSection(DatabaseController db);
+    static void PrintingSection(DatabaseController & db);
 
     // Utility functions
 
