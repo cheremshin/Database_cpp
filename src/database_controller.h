@@ -49,7 +49,8 @@ public:
 
     // Prints the rows of the database in the amount of "count" 
     // (if 0, then the entire database)
-    void Print(int count);
+    // return 0, if database is empty, otherwise - number of rows
+    int Print(int count);
 
     // Adds a record from a prepared temporary file
     // Structure: [id_len][id][type](string len)[value]...

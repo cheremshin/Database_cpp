@@ -116,7 +116,7 @@ void DatabaseController::PrintFieldValue(TmpMemory mem, int type) {
     }
 }
 
-void DatabaseController::Print(int count) {
+int DatabaseController::Print(int count) {
     int status = 1, row = 0;
     idb.seekg(0, std::ios::beg);
     db.seekg(0, std::ios::beg);
@@ -152,6 +152,8 @@ void DatabaseController::Print(int count) {
             }
         }
     }
+
+    return row;
 }
 
 void DatabaseController::Insert(std::fstream& input) {
