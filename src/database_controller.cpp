@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <cstring>
 #include "database_controller.h"
 #include "file_handler.h"
 #include "Encoder.h"
@@ -21,15 +22,15 @@ DatabaseController::DatabaseController(std::string filename, Structure structure
         tmp.close();
     }
 
-    this->idb = std::fstream{index_file,
-                             std::ios::binary |
-                             std::ios::in |
-                             std::ios::out};
+    this->idb.open(index_file,
+                   std::ios::binary |
+                   std::ios::in |
+                   std::ios::out);
 
-    this->db = std::fstream{db_file,
-                            std::ios::binary |
-                            std::ios::in |
-                            std::ios::out};
+    this->db.open(db_file,
+                  std::ios::binary |
+                  std::ios::in |
+                  std::ios::out);
 
     this->structure = structure;
 }
@@ -103,8 +104,7 @@ TmpMemory DatabaseController::ReadFieldValue(std::vector<char> input, size_t *of
             for (int i = 0; i < sizeof(int); i++) {
                 bytes[i] = input[*offset + i];
             }
-            int *tmp = (int *)bytes;
-            mem.v_int = *tmp;
+            memcpy(&mem.v_int, bytes, sizeof(int));
             *offset += sizeof(int);
             break;
         }
@@ -113,8 +113,7 @@ TmpMemory DatabaseController::ReadFieldValue(std::vector<char> input, size_t *of
             for (int i = 0; i < sizeof(size_t); i++) {
                 bytes[i] = input[*offset + i];
             }
-            size_t *tmp = (size_t *)bytes;
-            mem.v_size_t = *tmp;
+            memcpy(&mem.v_size_t, bytes, sizeof(size_t));
             *offset += sizeof(size_t);
             break;
         }
@@ -123,8 +122,7 @@ TmpMemory DatabaseController::ReadFieldValue(std::vector<char> input, size_t *of
             for (int i = 0; i < sizeof(float); i++) {
                 bytes[i] = input[*offset + i];
             }
-            float *tmp = (float *)bytes;
-            mem.v_float = *tmp;
+            memcpy(&mem.v_float, bytes, sizeof(float));
             *offset += sizeof(float);
             break;
         }
@@ -133,8 +131,7 @@ TmpMemory DatabaseController::ReadFieldValue(std::vector<char> input, size_t *of
             for (int i = 0; i < sizeof(double); i++) {
                 bytes[i] = input[*offset + i];
             }
-            double *tmp = (double *)bytes;
-            mem.v_double = *tmp;
+            memcpy(&mem.v_double, bytes, sizeof(double));
             *offset += sizeof(double);
             break;
         }
@@ -148,12 +145,11 @@ TmpMemory DatabaseController::ReadFieldValue(std::vector<char> input, size_t *of
             for (int i = 0; i < sizeof(size_t); i++) {
                 bytes[i] = input[*offset + i];
             }
-            size_t *tmp = (size_t *)bytes;
-            mem.v_size_t = *tmp;
+            memcpy(&mem.v_size_t, bytes, sizeof(size_t));
             *offset += sizeof(size_t);
 
             mem.v_string = "";
-            for (int i = 0; i < mem.v_size_t; i++) {
+            for (size_t i = 0; i < mem.v_size_t; i++) {
                 mem.v_string += input[*offset + i];
             }
             *offset += mem.v_size_t * sizeof(char);
@@ -216,7 +212,7 @@ int DatabaseController::Print(int count) {
 
     if (FileHandler::IsEmpty(idb)) status = 0;
 
-    while (!idb.eof() && status) {
+    while (idb.peek() != EOF && status) {
         auto mem = ReadFieldValue(idb, VCHAR);  // Get exist indicator
         char ex = mem.v_char;
 
@@ -224,27 +220,22 @@ int DatabaseController::Print(int count) {
         mem = ReadFieldValue(idb, VSIZE);  // Get seek in .db file
 
         db.seekg(mem.v_size_t, std::ios::beg);
-        ReadFieldValue(db, VCHAR);  // Skip exist indicator in db
-        for (int j = 0; j < structure.field_types.size(); j++) {
-            mem = ReadFieldValue(db, VINT);  // Get field type
-            int type = mem.v_int;
-
-            mem = ReadFieldValue(db, type);  // Get field value
+        for (size_t j = 0; j < structure.field_types.size(); j++) {
+            mem = ReadFieldValue(db, structure.field_types[j]);  // Get field value
 
             if (ex == EXIST) {
                 std::cout << "| ";
-                PrintFieldValue(mem, type);
-                if (j - 1 == structure.field_types.size()) {
-                    std::cout << "|\n";
+                PrintFieldValue(mem, structure.field_types[j]);
+                std::cout << " ";
+                if (j + 1 == structure.field_types.size()) {
+                    std::cout << "|" << std::endl;
                 }
             }
         }
 
-        if (count != 0) {
-            row++;
-            if (row == count) {
-                status = 0;
-            }
+        row++;
+        if (count != 0 && row == count) {
+            status = 0;
         }
     }
 
@@ -260,16 +251,17 @@ void DatabaseController::Insert(std::vector<char> input) {
 
     TmpMemory mem = TmpMemory{};
     mem.v_char = EXIST;
-    WriteFieldValue(idb, mem, VCHAR);
-    offset++;
+    WriteFieldValue(idb, mem, VCHAR);  // Writing exist indicator
 
+    // Writing "id" value and seek
     mem = ReadFieldValue(input, &offset, VSTRING);
     WriteFieldValue(idb, mem, VSTRING);
     WriteFieldValue(db, mem, VSTRING);
     mem.v_size_t = seek;
     WriteFieldValue(idb, mem, VSIZE);
 
-    for (int i = 0; i < structure.field_types.size() - 1; i++) {
+    // Writing other fields in db file
+    for (size_t i = 1; i < structure.field_types.size(); i++) {
         mem = ReadFieldValue(input, &offset, structure.field_types[i]);
         WriteFieldValue(db, mem, structure.field_types[i]);
     }
