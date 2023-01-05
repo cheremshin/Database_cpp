@@ -1,4 +1,4 @@
-#include "Encoder.h"
+#include "encoder.h"
 #include <algorithm>
 
 std::string Encoder::alphabet = "0123456789"
