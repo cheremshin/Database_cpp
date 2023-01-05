@@ -1,6 +1,11 @@
 #include "Encoder.h"
 #include <algorithm>
 
+std::string Encoder::alphabet = "0123456789"
+                                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                 "abcdefghijklmnopqrstuvwxyz";
+int Encoder::base = 63;
+
 std::string Encoder::Encode(size_t input) {
     if (input < base) return std::to_string(input);
 
