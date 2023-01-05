@@ -24,7 +24,7 @@
 // Row deleted
 #define DEL        0b1
 
-#define BLOCK_SIZE 1024
+#define PAGE_SIZE 1024
 
 struct TmpMemory {
     int v_int;
@@ -46,9 +46,10 @@ private:
 
     void WriteFieldValue(std::fstream& file, TmpMemory mem, int type);
     TmpMemory ReadFieldValue(std::fstream& file, int type);
-    TmpMemory ReadFieldValue(std::vector<char> input, int *offset, int type);
+    TmpMemory ReadFieldValue(std::vector<char> input, size_t *offset, int type);
     void PrintFieldValue(TmpMemory mem, int type);
     size_t GetSize(int type);
+    void GetPage(size_t size, std::vector<char> *input);
 public:
     DatabaseController(std::string filename, Structure structure);
 

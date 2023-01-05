@@ -3,6 +3,7 @@
 #include <filesystem>
 #include "database_controller.h"
 #include "file_handler.h"
+#include "Encoder.h"
 
 DatabaseController::DatabaseController(std::string filename, Structure structure) {
     auto file_handler = FileHandler{};
@@ -93,7 +94,7 @@ TmpMemory DatabaseController::ReadFieldValue(std::fstream& file, int type) {
     return mem;
 }
 
-TmpMemory DatabaseController::ReadFieldValue(std::vector<char> input, int *offset, int type) {
+TmpMemory DatabaseController::ReadFieldValue(std::vector<char> input, size_t *offset, int type) {
     auto mem = TmpMemory{};
 
     switch (type) {
@@ -251,7 +252,7 @@ int DatabaseController::Print(int count) {
 }
 
 void DatabaseController::Insert(std::vector<char> input) {
-    int offset = 0;  // Input offset
+    size_t offset = 0;  // Input offset
     idb.seekg(0, std::ios::end);
     db.seekg(0, std::ios::end);
 
@@ -312,33 +313,35 @@ int DatabaseController::Delete(std::string id) {
 }
 
 int DatabaseController::Search(std::string id, size_t *i_seek, size_t *db_seek) {
-    int status = 0, inside = 0;
+    int status = 0, inside = 0, found = 0;
     size_t seek = 0, size = 0;
 
-    for (int i = 0; i < structure.field_types.size(); i++) {
-        size += GetSize(structure.field_types[i]);
-    }
+    idb.seekg(0, std::ios::beg);
+    auto mem = ReadFieldValue(idb, VCHAR);
+    mem = ReadFieldValue(idb, VSTRING);
+
+    size = mem.v_size_t + sizeof(size_t);
 
     idb.seekg(0, std::ios::beg);
     while (!idb.eof() && !inside) {
-        seek += BLOCK_SIZE * size;
+        seek += PAGE_SIZE * size;
         idb.seekg(static_cast<std::streampos>(seek));
 
-        auto mem = ReadFieldValue(idb, VCHAR);
+        mem = ReadFieldValue(idb, VCHAR);
         mem = ReadFieldValue(idb, VSTRING);
 
-        if (Encoder::Decode(mem.v_string) >= Encoder::Encode(id)) {
+        if (Encoder::Decode(mem.v_string) >= Encoder::Decode(id)) {
             inside = 1;
         }
     }
 
-    seek -= BLOCK_SIZE * size;
+    seek -= PAGE_SIZE * size;
     idb.seekg(static_cast<std::streampos>(seek));
 
     std::vector<char> input;
-    GetBlock(BLOCK_SIZE * size, &input);
+    GetPage(size, &input);
 
-    for (int i = 0; i < BLOCK_SIZE; i++) {
+    for (int i = 0; i < PAGE_SIZE && !found; i++) {
         size_t offset = 0;
         auto mem = ReadFieldValue(input, &offset, VCHAR);
         mem = ReadFieldValue(input, &offset, VSTRING);
@@ -352,5 +355,24 @@ int DatabaseController::Search(std::string id, size_t *i_seek, size_t *db_seek) 
         }
     }
 
+    if (found) status = 1;
+
     return status;
+}
+
+void DatabaseController::GetPage(size_t size, std::vector<char> *input) {
+    int status = 1;
+    size_t rows = 0;
+
+    char *row = new char [size];
+
+    while (!idb.eof() && status) {
+        idb.read((char *)&row, sizeof(char) * size);
+        for (size_t i = 0; i < size; i++) {
+            (*input).push_back(row[i]);
+        }
+
+        rows++;
+        if (rows == PAGE_SIZE) status = 0;
+    }
 }
