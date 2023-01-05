@@ -94,7 +94,7 @@ T Menu::GetValue() {
 }
 
 template<typename T>
-void Menu::GetByteArray(T value, char *bytes[]) {
+void Menu::ValueToByteArray(T value, char *bytes[]) {
     unsigned char buff;
 
     for (int i = 0; i < sizeof(value); i++) {
@@ -105,32 +105,18 @@ void Menu::GetByteArray(T value, char *bytes[]) {
 template<typename T>
 void Menu::PushByteArray(int type, T value, std::vector<char> *input) {
     char *t = new char[sizeof(int)];
-    GetByteArray<int>(VINT, &t);
+    ValueToByteArray<int>(VINT, &t);
     for (int i = 0; i < sizeof(int); i++) {
         (*input).push_back(t[i]);
     }
     delete t;
 
     char *bytes = new char[sizeof(T)];
-    GetByteArray<T>(value, &bytes);
+    ValueToByteArray<T>(value, &bytes);
     for (int i = 0; i < sizeof(T); i++) {
         (*input).push_back(bytes[i]);
     }
     delete bytes;
-}
-
-void Menu::PrintMainMenu() {
-    std::cout << "+----------------------------------+\n"
-                 "|             Database             |\n"
-                 "+----------------------------------+\n"
-                 "|                                  |\n"
-                 "|    1. Load database              |\n"
-                 "|    2. Create new database        |\n"
-                 "|    0. Exit                       |\n"
-                 "|                                  |\n"
-                 "+----------------------------------+\n";
-
-    std::cout << "\n> ";
 }
 
 int Menu::LoadMenu() {
@@ -155,34 +141,6 @@ int Menu::LoadMenu() {
     }
 
     return current_page;
-}
-
-void Menu::PrintLoadMenu(std::vector<std::string> db_list) {
-    std::cout << "+----------------------------------+\n"
-                 "|             Database             |\n"
-                 "+----------------------------------+\n"
-                 "|          Load database           |\n"
-                 "+----------------------------------+\n"
-                 "|                                  |\n";
-
-    if (db_list.size() == 0) {
-        std::cout << "|        No databases found        |\n";
-    } else {
-        for (int i = 0; i < db_list.size(); i++) {
-            std::cout << "|    " << i + 1 << ". " << db_list[i];
-            for (int j = 0; j < 27 - db_list[i].length(); j++) {
-                std::cout << " ";
-            }
-            std::cout << "|\n";
-        }
-    }
-
-    std::cout << "|                                  |\n"
-                 "|    0. Back                       |\n"
-                 "|                                  |\n"
-                 "+----------------------------------+\n";
-
-    std::cout << "\n> ";
 }
 
 void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure) {
@@ -222,35 +180,6 @@ void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure)
 
         char c = getc(stdin);  // Pause before screen render
     }
-}
-
-void Menu::PrintDbMenu(std::string filename) {
-    std::cout << "+----------------------------------+\n"
-                 "|             Database             |\n"
-                 "+----------------------------------+\n"
-                 "|";
-
-    int half_len = filename.length() / 2;
-    for (int i = 0; i < 17 - half_len; i++) {
-        std::cout << " ";
-    }
-    std::cout << filename;
-
-    half_len = (filename.length() % 2) ? half_len : half_len - 1;
-    for (int i = 17 + half_len + 1; i < 34; i++) {
-        std::cout << " ";
-    }
-
-
-    std::cout << "|\n";
-    std::cout << "+----------------------------------+\n"
-                 "|    1. Print                      |\n"
-                 "|    2. Insert                     |\n"
-                 "|    3. Delete                     |\n"
-                 "|    4. Search                     |\n"
-                 "|                                  |\n"
-                 "|    0. Save and exit              |\n"
-                 "+----------------------------------+\n";
 }
 
 void Menu::PrintingSection(DatabaseController & db) {
@@ -351,23 +280,6 @@ int Menu::CreateMenu() {
     current_page = 0;
 
     return current_page;
-}
-
-void Menu::PrintCreateMenu() {
-    std::cout << "+----------------------------------+\n"
-                 "|             Database             |\n"
-                 "+----------------------------------+\n"
-                 "|       Create new database        |\n"
-                 "+----------------------------------+\n";
-
-    std::cout << "\nType database name"
-                 "\n> ";
-}
-
-void Menu::PrintChoosingFields() {
-    std::cout << "\n+----------------------------------+\n"
-                 "|         Chooosing fields         |\n"
-                 "+----------------------------------+\n";
 }
 
 Structure Menu::GetStructure() {
