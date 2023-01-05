@@ -89,3 +89,14 @@ void Menu::PrintChoosingFields() {
                  "|         Chooosing fields         |\n"
                  "+----------------------------------+\n";
 }
+
+void Menu::ShowTypes() {
+    std::cout << "\n  [1] - int\n"
+                 "  [2] - size_t\n"
+                 "  [3] - float\n"
+                 "  [4] - double\n"
+                 "  [5] - char\n"
+                 "  [6] - string\n";
+
+    std::cout << "\n> ";
+}

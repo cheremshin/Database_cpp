@@ -20,11 +20,11 @@ private:
     // Input functions
 
     static std::string GetStr();
-    
-    // Preparing "input" for insert DBController method 
 
     template<typename T>
     static T GetValue();
+    
+    // Preparing "input" for insert DBController method 
 
     template<typename T>
     static void ValueToByteArray(T value, char *bytes[]);

@@ -3,6 +3,7 @@
 #include <fstream>
 #include "menu.h"
 #include "file_handler.h"
+#include "encoder.h"
 
 void Menu::StartMenuModule() {
     int exit_status = 0;
@@ -60,63 +61,6 @@ int Menu::MainMenu(int *exit_status) {
     }
 
     return current_page;
-}
-
-int Menu::StrToInt(std::string str, int *status) {
-    int len = str.length();
-    for (int i = 0; i < str.length() / 2; i++) {
-        std::swap(str[i], str[len - i - 1]);
-    }
-
-    int res = 0;
-    for (int i = 0; i < str.length() && *status; i++) {
-        if (isdigit(str[i])) {
-            res += (str[i] - '0') * pow(10, i);
-        } else {
-            *status = 0;
-        }
-    }
-
-    return res;
-}
-
-std::string Menu::GetStr() {
-    std::string value;
-    std::cin >> value;
-    return value;
-}
-
-template<typename T>
-T Menu::GetValue() {
-    T value;
-    std::cin >> value;
-    return value;
-}
-
-template<typename T>
-void Menu::ValueToByteArray(T value, char *bytes[]) {
-    unsigned char buff;
-
-    for (int i = 0; i < sizeof(value); i++) {
-        *bytes[i] = *((unsigned char *)&value + i);
-    }
-}
-
-template<typename T>
-void Menu::PushByteArray(int type, T value, std::vector<char> *input) {
-    char *t = new char[sizeof(int)];
-    ValueToByteArray<int>(VINT, &t);
-    for (int i = 0; i < sizeof(int); i++) {
-        (*input).push_back(t[i]);
-    }
-    delete t;
-
-    char *bytes = new char[sizeof(T)];
-    ValueToByteArray<T>(value, &bytes);
-    for (int i = 0; i < sizeof(T); i++) {
-        (*input).push_back(bytes[i]);
-    }
-    delete bytes;
 }
 
 int Menu::LoadMenu() {
@@ -212,7 +156,23 @@ void Menu::InsertingSection(DatabaseController & db, Structure structure) {
     std::vector<char> input;
 
     ClearScreen();
-    for (int i = 0; i < structure.field_types.size(); i++) {
+
+    // Generate and push id to input array
+    std::string id = Encoder::GenerateId();
+    std::cout << id << std::endl;
+    char *sz = new char[sizeof(size_t)];
+    ValueToByteArray<size_t>(id.length(), &sz);
+    for (int j = 0; j < sizeof(size_t); j++) {
+        input.push_back(sz[j]);
+    }
+    for (int j = 0; j < id.length(); j++) {
+        input.push_back(id[j]);
+    }
+    
+    delete sz;
+
+    // Get and push all db fields to input array
+    for (int i = 1; i < structure.field_types.size(); i++) {
         std::cout << structure.field_names[i] << ":\n> ";
 
         int type = structure.field_types[i];
@@ -240,24 +200,33 @@ void Menu::InsertingSection(DatabaseController & db, Structure structure) {
             }
         case VCHAR: {
                 char value = GetValue<char>();
-                input.push_back(value);
+                PushByteArray<char>(VCHAR, value, &input);
             }
         case VSTRING: {
                 std::string bytes = GetValue<std::string>();
-                unsigned char buff;
+
+                char *sz = new char[sizeof(size_t)];
+                ValueToByteArray<size_t>(bytes.length(), &sz);
                 for (int j = 0; j < sizeof(size_t); j++) {
-                    input.push_back(*(unsigned char *)&bytes + j);
+                    input.push_back(sz[j]);
+                }
+                for (int j = 0; j < bytes.length(); j++) {
+                    input.push_back(bytes[j]);
                 }
 
-                for (int j = 0; j < bytes.length(); j++) {
-                    input.push_back(bytes[i]);
-                }
+                delete sz;
             }
         }
     }
 
-    
+    for (int i = 0; i < input.size(); i ++) {
+        printf("%d\n", input[i]);
+    }
+    printf("\n");
 
+    db.Insert(input);
+    
+    
     std::cout << "\nPress any key to continue";
     char ch = getc(stdin);
 }
@@ -377,17 +346,6 @@ int Menu::GetType(int *status) {
     return result;
 }
 
-void Menu::ShowTypes() {
-    std::cout << "\n  [1] - int\n"
-                 "  [2] - size_t\n"
-                 "  [3] - float\n"
-                 "  [4] - double\n"
-                 "  [5] - char\n"
-                 "  [6] - string\n";
-
-    std::cout << "\n> ";
-}
-
 std::string Menu::TypeToStr(int type) {
     std::string str = "";
 
@@ -418,4 +376,52 @@ std::string Menu::TypeToStr(int type) {
 
 void Menu::ClearScreen() {
     std::cout << "\e[1;1H\e[2J";  // ANSI escape code for screen clearing
+}
+
+int Menu::StrToInt(std::string str, int *status) {
+    int len = str.length();
+    for (int i = 0; i < str.length() / 2; i++) {
+        std::swap(str[i], str[len - i - 1]);
+    }
+
+    int res = 0;
+    for (int i = 0; i < str.length() && *status; i++) {
+        if (isdigit(str[i])) {
+            res += (str[i] - '0') * pow(10, i);
+        } else {
+            *status = 0;
+        }
+    }
+
+    return res;
+}
+
+std::string Menu::GetStr() {
+    std::string value;
+    std::cin >> value;
+    return value;
+}
+
+template<typename T>
+T Menu::GetValue() {
+    T value;
+    std::cin >> value;
+    return value;
+}
+
+template<typename T>
+void Menu::PushByteArray(int type, T value, std::vector<char> *input) {
+    char *bytes = new char[sizeof(T)];
+    ValueToByteArray<T>(value, &bytes);
+    for (int i = 0; i < sizeof(T); i++) {
+        (*input).push_back(bytes[i]);
+    }
+    delete bytes;
+}
+
+template<typename T>
+void Menu::ValueToByteArray(T value, char *bytes[]) {
+    std::copy(static_cast<char *>(static_cast<void *>(&value)),
+              static_cast<char *>(static_cast<void *>(&value) + sizeof(value)),
+              *bytes);
 }
