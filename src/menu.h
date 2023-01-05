@@ -27,7 +27,7 @@ private:
     static T GetValue();
 
     template<typename T>
-    static void GetByteArray(T value, char *bytes[]);
+    static void ValueToByteArray(T value, char *bytes[]);
 
     template<typename T>
     static void PushByteArray(int type, T value, std::vector<char> *input);
