@@ -90,25 +90,29 @@ template<typename T>
 T Menu::GetValue() {
     T value;
     std::cin >> value;
+    return value;
 }
 
 template<typename T>
-void Menu::GetByteArray(int type, T value, char *bytes[]) {
+void Menu::GetByteArray(T value, char *bytes[]) {
+    unsigned char buff;
 
+    for (int i = 0; i < sizeof(value); i++) {
+        *bytes[i] = *((unsigned char *)&value + i);
+    }
 }
 
 template<typename T>
-void Menu::PushByteArray(int type, std::vector<char> *input) {
+void Menu::PushByteArray(int type, T value, std::vector<char> *input) {
     char *t = new char[sizeof(int)];
-    GetByteArray<int>(VINT, VINT, &t);
+    GetByteArray<int>(VINT, &t);
     for (int i = 0; i < sizeof(int); i++) {
         (*input).push_back(t[i]);
     }
-    delete type;
+    delete t;
 
     char *bytes = new char[sizeof(T)];
-    T value = GetValue<T>();
-    GetByteArray<T>(type, value, &bytes);
+    GetByteArray<T>(value, &bytes);
     for (int i = 0; i < sizeof(T); i++) {
         (*input).push_back(bytes[i]);
     }
@@ -286,19 +290,23 @@ void Menu::InsertingSection(DatabaseController & db, Structure structure) {
         switch (type)
         {
         case VINT: {
-                PushByteArray<int>(VINT, &input);
+                int value = GetValue<int>();
+                PushByteArray<int>(VINT, value, &input);
                 break;
             }
         case VSIZE: {
-                PushByteArray<size_t>(VSIZE, &input);
+                size_t value = GetValue<size_t>();
+                PushByteArray<size_t>(VSIZE, value, &input);
                 break;
             }
         case VFLOAT: {
-                PushByteArray<float>(VFLOAT, &input);
+                float value = GetValue<float>();
+                PushByteArray<float>(VFLOAT, value, &input);
                 break;
             }
         case VDOUBLE: {
-                PushByteArray<double>(VDOUBLE, &input);
+                double value = GetValue<double>();
+                PushByteArray<double>(VDOUBLE, value, &input);
                 break;
             }
         case VCHAR: {
@@ -307,6 +315,11 @@ void Menu::InsertingSection(DatabaseController & db, Structure structure) {
             }
         case VSTRING: {
                 std::string bytes = GetValue<std::string>();
+                unsigned char buff;
+                for (int j = 0; j < sizeof(size_t); j++) {
+                    input.push_back(*(unsigned char *)&bytes + j);
+                }
+
                 for (int j = 0; j < bytes.length(); j++) {
                     input.push_back(bytes[i]);
                 }
