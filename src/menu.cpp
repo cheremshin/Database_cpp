@@ -159,7 +159,6 @@ void Menu::InsertingSection(DatabaseController & db, Structure structure) {
 
     // Generate and push id to input array
     std::string id = Encoder::GenerateId();
-    std::cout << id << std::endl;
     char *sz = new char[sizeof(size_t)];
     ValueToByteArray<size_t>(id.length(), &sz);
     for (int j = 0; j < sizeof(size_t); j++) {
@@ -218,11 +217,6 @@ void Menu::InsertingSection(DatabaseController & db, Structure structure) {
             }
         }
     }
-
-    for (int i = 0; i < input.size(); i ++) {
-        printf("%d\n", input[i]);
-    }
-    printf("\n");
 
     db.Insert(input);
     
