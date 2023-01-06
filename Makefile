@@ -1,18 +1,18 @@
 ## Set default configuration
 TARGET = ./program
 CC = g++
-FLAGS = --std=c++17
+FLAGS = --std=c++17 -w
 
 ## Make array of all object files for library
 OBJS =
-OBJS += src/main.cpp
-OBJS += src/menu.cpp
-OBJS += src/menu_render.cpp
-OBJS += src/file_handler.cpp
-OBJS += src/database_controller.cpp
-OBJS += src/encoder.cpp
+OBJS += src/main.o
+OBJS += src/menu.o
+OBJS += src/file_handler.o
+OBJS += src/database_controller.o
+OBJS += src/encoder.o
 
-all: $(TARGET)
+
+all: $(TARGET) clean_o
 
 $(TARGET): $(OBJS)
 	$(CC) $(FLAGS) $(OBJS) -o $(TARGET)
@@ -23,4 +23,7 @@ $(TARGET): $(OBJS)
 rebuild: clean all
 
 clean:
-	rm -rf $(TARGET) src/*.o
+	rm -rf $(TARGET) $(OBJS)
+
+clean_o:
+	rm -rf $(OBJS)
