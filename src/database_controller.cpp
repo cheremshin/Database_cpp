@@ -82,10 +82,9 @@ TmpMemory DatabaseController::ReadFieldValue(std::fstream& file, int type) {
         file.read((char *)&mem.v_char, sizeof(char));
         break;
     case VSTRING:
-        size_t str_len;
-        file.read((char *)&str_len, sizeof(size_t));
+        file.read((char *)&mem.v_size_t, sizeof(size_t));
         mem.v_string = "";
-        for (int i = 0; i < str_len; i++) {
+        for (int i = 0; i < mem.v_size_t; i++) {
             char ch;
             file.read((char *)&ch, sizeof(char));
             mem.v_string += ch;
@@ -205,6 +204,34 @@ size_t DatabaseController::GetSize(int type) {
     return size;
 }
 
+std::string DatabaseController::TypeToStr(int type) {
+    std::string str = "";
+
+    switch (type)
+    {
+    case VINT:
+        str += "int";
+        break;
+    case VSIZE:
+        str += "size_t";
+        break;
+    case VFLOAT:
+        str += "float";
+        break;
+    case VDOUBLE:
+        str += "double";
+        break;
+    case VCHAR:
+        str += "char";
+        break;
+    case VSTRING:
+        str += "string";
+        break;
+    }
+
+    return str;
+}
+
 int DatabaseController::Print(int count) {
     int status = 1, row = 0;
     idb.seekg(0, std::ios::beg);
@@ -240,6 +267,25 @@ int DatabaseController::Print(int count) {
     }
 
     return row;
+}
+
+void DatabaseController::PrintRow(size_t idb_seek, size_t db_seek) {
+    idb.seekg(idb_seek, std::ios::beg);
+    db.seekg(db_seek, std::ios::beg);
+
+    TmpMemory mem = TmpMemory{};
+
+    for (int i = 0; i < structure.field_types.size(); i++) {
+        int type = structure.field_types[i];
+
+        std::cout << structure.field_names[i] +
+                    " [" + TypeToStr(type) + "]: ";
+
+        mem = ReadFieldValue(db, type);
+        PrintFieldValue(mem, type);
+
+        std::cout << std::endl;
+    }
 }
 
 void DatabaseController::Insert(std::vector<char> input) {
@@ -300,44 +346,55 @@ int DatabaseController::Delete(std::string id) {
 
 int DatabaseController::Search(std::string id, size_t *i_seek, size_t *db_seek) {
     int status = 0, inside = 0, found = 0;
-    size_t seek = 0, size = 0;
+    size_t seek = 0, last_seek = 0, size = 0;
 
     idb.seekg(0, std::ios::beg);
     auto mem = ReadFieldValue(idb, VCHAR);
     mem = ReadFieldValue(idb, VSTRING);
 
-    size = mem.v_size_t + sizeof(size_t);
+    size = sizeof(char) + mem.v_size_t + sizeof(size_t);
 
-    idb.seekg(0, std::ios::beg);
-    while (!idb.eof() && !inside) {
-        seek += PAGE_SIZE * size;
-        idb.seekg(static_cast<std::streampos>(seek));
+    while (idb.peek() != EOF && !inside) {
+        idb.seekg(0, std::ios::end);
 
-        mem = ReadFieldValue(idb, VCHAR);
-        mem = ReadFieldValue(idb, VSTRING);
+        if (seek + PAGE_SIZE * size <= idb.tellg()) {
+            last_seek = (PAGE_SIZE - 1) * size;
+            seek += last_seek;
 
-        if (Encoder::Decode(mem.v_string) >= Encoder::Decode(id)) {
+            idb.seekg(static_cast<std::streampos>(seek));
+
+            mem = ReadFieldValue(idb, VCHAR);
+            mem = ReadFieldValue(idb, VSTRING);
+
+            if (Encoder::Decode(mem.v_string) >= Encoder::Decode(id)) {
+                inside = 1;
+                seek -= last_seek + size;
+            }
+        } else {
+            last_seek = idb.tellg() - seek - size;
             inside = 1;
         }
     }
 
-    seek -= PAGE_SIZE * size;
     idb.seekg(static_cast<std::streampos>(seek));
 
     std::vector<char> input;
     GetPage(size, &input);
 
+    size_t offset = 0;
+    char ex;
     for (int i = 0; i < PAGE_SIZE && !found; i++) {
-        size_t offset = 0;
-        auto mem = ReadFieldValue(input, &offset, VCHAR);
+        mem = ReadFieldValue(input, &offset, VCHAR);
+        ex = mem.v_char;
         mem = ReadFieldValue(input, &offset, VSTRING);
-        mem = ReadFieldValue(input, &offset, VSIZE);
 
-        if ((mem.v_char == EXIST) &&
-            (mem.v_string == id)) {
+        if ((ex == EXIST) && (mem.v_string == id)) {
             found = 1;
+            mem = ReadFieldValue(input, &offset, VSIZE);
             *db_seek = mem.v_size_t;
             *i_seek = seek + i * size;
+        } else {
+            mem = ReadFieldValue(input, &offset, VSIZE);
         }
     }
 
@@ -349,15 +406,14 @@ int DatabaseController::Search(std::string id, size_t *i_seek, size_t *db_seek) 
 void DatabaseController::GetPage(size_t size, std::vector<char> *input) {
     int status = 1;
     size_t rows = 0;
+    char ch;
 
-    char *row = new char [size];
-
-    while (!idb.eof() && status) {
-        idb.read((char *)&row, sizeof(char) * size);
+    while (idb.peek() != EOF && status) {
         for (size_t i = 0; i < size; i++) {
-            (*input).push_back(row[i]);
+            idb.read((char *)&ch, sizeof(char));
+            (*input).push_back(ch);
         }
-
+        
         rows++;
         if (rows == PAGE_SIZE) status = 0;
     }

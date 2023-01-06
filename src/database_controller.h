@@ -48,6 +48,7 @@ private:
     TmpMemory ReadFieldValue(std::fstream& file, int type);
     TmpMemory ReadFieldValue(std::vector<char> input, size_t *offset, int type);
     void PrintFieldValue(TmpMemory mem, int type);
+
     size_t GetSize(int type);
     void GetPage(size_t size, std::vector<char> *input);
 public:
@@ -57,6 +58,9 @@ public:
     // (if 0, then the entire database)
     // return 0, if database is empty, otherwise - number of rows
     int Print(int count);
+
+    // Prints row with given "id". Uses after Search method.
+    void PrintRow(size_t idb_seek, size_t db_seek);
 
     // Adds a record from a prepared temporary file
     // Structure: [id_len][id][type](string len)[value]...
@@ -71,6 +75,11 @@ public:
     // If found, set seek to "seek" pointer
     // return value: 0 - not found, 1 - found
     int Search(std::string id, size_t *i_seek, size_t *db_seek);
+
+
+    // Utility methods
+
+    static std::string TypeToStr(int type);
 };
 
 #endif  // SRC_DATABASE_CONTROLLER_H_
