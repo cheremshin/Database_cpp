@@ -116,7 +116,7 @@ void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure)
             DeletingSection(db);
             break;
         case 4:
-            // db.Search();
+            SearchingSection(db);
             break;
         default:
             break;
@@ -225,7 +225,7 @@ void Menu::InsertingSection(DatabaseController & db, Structure structure) {
     char ch = getc(stdin);
 }
 
-void Menu::DeletingSection(DatabaseController &db) {
+void Menu::DeletingSection(DatabaseController & db) {
     int status = 1;
 
     ClearScreen();
@@ -242,6 +242,28 @@ void Menu::DeletingSection(DatabaseController &db) {
     }
 
     std::cout << "Press 'Enter' to continue\n";
+    char ch = getc(stdin);
+}
+
+void Menu::SearchingSection(DatabaseController & db) {
+    int status = 1;
+    size_t idb_seek, db_seek;
+
+    ClearScreen();
+
+    std::cout << "Enter 'id' of searching element\n> ";
+    std::string input = GetStr();
+
+    status = db.Search(input, &idb_seek, &db_seek);
+
+    if (status) {
+        std::cout << std::endl;
+        db.PrintRow(idb_seek, db_seek);
+    } else {
+        std::cout << "\nNo element with given 'id' found\n";
+    }
+
+    std::cout << "\nPress 'Enter' to continue\n";
     char ch = getc(stdin);
 }
 
@@ -350,34 +372,6 @@ int Menu::GetType(int *status) {
     }
 
     return result;
-}
-
-std::string Menu::TypeToStr(int type) {
-    std::string str = "";
-
-    switch (type)
-    {
-    case VINT:
-        str += "int";
-        break;
-    case VSIZE:
-        str += "size_t";
-        break;
-    case VFLOAT:
-        str += "float";
-        break;
-    case VDOUBLE:
-        str += "double";
-        break;
-    case VCHAR:
-        str += "char";
-        break;
-    case VSTRING:
-        str += "string";
-        break;
-    }
-
-    return str;
 }
 
 void Menu::ClearScreen() {
@@ -534,7 +528,8 @@ void Menu::ShowTypes() {
 void Menu::PrintCurrentStructure(std::vector<std::string> field_names,
                                       std::vector<int> field_types) {
     for (int i = 0; i < field_names.size(); i++) {
-        std::cout << " | " + field_names[i] + " [" + TypeToStr(field_types[i]) + "]";
+        std::cout << " | " + field_names[i] +
+                     " [" + DatabaseController::TypeToStr(field_types[i]) + "]";
     }
     std::cout << " |" << std::endl;
 }

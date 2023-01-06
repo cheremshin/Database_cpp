@@ -49,7 +49,6 @@ private:
                                       std::vector<int> field_types);
     static int GetType(int *status);
     static void ShowTypes();
-    static std::string TypeToStr(int type);
 
     // Db menu section
 
@@ -58,7 +57,8 @@ private:
 
     static void PrintingSection(DatabaseController & db);
     static void InsertingSection(DatabaseController & db, Structure structure);
-    static void DeletingSection(DatabaseController &db);
+    static void DeletingSection(DatabaseController & db);
+    static void SearchingSection(DatabaseController & db);
 
     // Utility functions
 
