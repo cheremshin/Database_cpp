@@ -272,9 +272,8 @@ int DatabaseController::Delete(std::string id) {
     char ex = DEL;
 
     idb.seekg(0, std::ios::beg);
-    db.seekg(0, std::ios::beg);
 
-    while (!idb.eof() && !found) {
+    while (idb.peek() != EOF && !found) {
         ReadFieldValue(idb, VCHAR);  // Skip exitst indicator
 
         auto mem = ReadFieldValue(idb, VSTRING);  // Get id string
@@ -283,7 +282,7 @@ int DatabaseController::Delete(std::string id) {
         if (mem.v_string == id) {
             found = 1;
 
-            // 1. Set DEL indicator in index file
+            // Set DEL indicator in index file
             // Moves back to position where "exists" indicator starts
             idb.seekg(-(sizeof(char) +  // size of exist byte
                       sizeof(size_t) +  // size of id_len
@@ -292,10 +291,6 @@ int DatabaseController::Delete(std::string id) {
                       std::ios::cur);
             // Rewrite indicator to "DEL"
             idb.write((char *)&ex, sizeof(char));
-
-            // 2. Set DEL indicator in database file 
-            db.seekg(mem.v_size_t, std::ios::beg);
-            db.write((char *)&ex, sizeof(char));
         }
     }
 
