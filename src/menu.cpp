@@ -113,7 +113,7 @@ void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure)
             InsertingSection(db, structure);
             break;
         case 3:
-            // db.Delete();
+            DeletingSection(db);
             break;
         case 4:
             // db.Search();
@@ -222,6 +222,26 @@ void Menu::InsertingSection(DatabaseController & db, Structure structure) {
     
     
     std::cout << "\nPress 'Enter' to continue";
+    char ch = getc(stdin);
+}
+
+void Menu::DeletingSection(DatabaseController &db) {
+    int status = 1;
+
+    ClearScreen();
+
+    std::cout << "Enter 'id' of deleting element\n> ";
+    std::string input = GetStr();
+
+    status = db.Delete(input);
+
+    if (status) {
+        std::cout << "Successfully deleted\n";
+    } else {
+        std::cout << "No element with given 'id' found\n";
+    }
+
+    std::cout << "Press 'Enter' to continue\n";
     char ch = getc(stdin);
 }
 

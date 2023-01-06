@@ -58,6 +58,7 @@ private:
 
     static void PrintingSection(DatabaseController & db);
     static void InsertingSection(DatabaseController & db, Structure structure);
+    static void DeletingSection(DatabaseController &db);
 
     // Utility functions
 
