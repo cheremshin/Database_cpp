@@ -277,20 +277,19 @@ int DatabaseController::Delete(std::string id) {
         ReadFieldValue(idb, VCHAR);  // Skip exitst indicator
 
         auto mem = ReadFieldValue(idb, VSTRING);  // Get id string
-        mem = ReadFieldValue(idb, VSIZE);  // Get seek in .db file
 
         if (mem.v_string == id) {
             found = 1;
-
             // Set DEL indicator in index file
             // Moves back to position where "exists" indicator starts
             idb.seekg(-(sizeof(char) +  // size of exist byte
                       sizeof(size_t) +  // size of id_len
-                      mem.v_string.length() * sizeof(char) +  // size of id
-                      sizeof(size_t)),  // size of seek
+                      mem.v_string.length() * sizeof(char)),  // size of id
                       std::ios::cur);
             // Rewrite indicator to "DEL"
             idb.write((char *)&ex, sizeof(char));
+        } else {
+            mem = ReadFieldValue(idb, VSIZE);  // Get seek in .db file
         }
     }
 
