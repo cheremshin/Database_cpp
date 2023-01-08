@@ -89,17 +89,19 @@ int Menu::LoadMenu() {
 
 void Menu::OpenDb(std::string filename, std::fstream &file, Structure structure) {
     int status = 1;
+    size_t rows_count = 0, deleted = 0;
+
+    DatabaseController db = DatabaseController(filename, structure);
+
     while (status) {
         ClearScreen();
-        PrintDbMenu(filename);
-        std::cout << "\n";
-        PrintCurrentStructure(structure.field_names, structure.field_types);
-        std::cout << "\n> ";
+
+        CommandPalette();
+        DatabaseParams(filename, structure, rows_count, deleted);
+        DatabaseValues(db, structure);
 
         int value = StrToInt(GetStr(), &status);
         if (!status) value = -1;
-
-        DatabaseController db = DatabaseController(filename, structure);
 
         switch (value)
         {
@@ -468,33 +470,68 @@ void Menu::PrintLoadMenu(std::vector<std::string> db_list) {
     std::cout << "\n> ";
 }
 
-void Menu::PrintDbMenu(std::string filename) {
-    std::cout << "+----------------------------------+\n"
-                 "|             Database             |\n"
-                 "+----------------------------------+\n"
-                 "|";
+void Menu::CommandPalette() {
+    std::cout << "\n"
+                 " +--------------------------+\n"
+                 " |     Command palette      |\n"
+                 " +--------------------------+\n"
+                 " |                          |\n"
+                 " |     1. Insert            |\n"
+                 " |     2. Search            |\n"
+                 " |     3. Recovery          |\n"
+                 " |                          |\n"
+                 " |     0. Save and Exit     |\n"
+                 " |                          |\n"
+                 " +--------------------------+";
+}
 
-    int half_len = filename.length() / 2;
-    for (int i = 0; i < 17 - half_len; i++) {
-        std::cout << " ";
+void Menu::DatabaseParams(std::string filename, Structure structure,
+                          size_t rows, size_t deleted) {
+    int x = 35, y = 2, width = 29;
+
+    // horizontal lines + headers + fields
+    int height = 5 + 4 + structure.field_names.size();
+    for (int i = 0; i < height; i++) {
+        if (i == 0 || i == 2 || i == 4 || i == height - 4 || i == height - 1) {
+            PrintLine(x, y + i, width);
+            if (i != 0 && i != height - 1) {
+                tc_move_cursor(x + width / 2, y + i);
+                std::cout << "+";
+            }
+        } else {
+            tc_move_cursor(x, y + i);
+            std::cout << "|";
+            tc_move_cursor(x + width - 1, y + i);
+            std::cout << "|";
+            if (i == 3 || (i > 4 && i < 5 + structure.field_names.size())) {
+                tc_move_cursor(x + width / 2, y + i);
+                std::cout << "|";
+            }
+        }
     }
+    tc_move_cursor(x + width / 2 - filename.length() / 2, y + 1);
     std::cout << filename;
-
-    half_len = (filename.length() % 2) ? half_len : half_len - 1;
-    for (int i = 17 + half_len + 1; i < 34; i++) {
-        std::cout << " ";
+    tc_move_cursor(x + 2, y + 3);
+    std::cout << "Column name";
+    tc_move_cursor(x + width / 2 + 2, y + 3);
+    std::cout << "Column type";
+    for (int i = 0; i < structure.field_names.size(); i++) {
+        tc_move_cursor(x + 2, y + 5 + i);
+        std::cout << structure.field_names[i];
+        tc_move_cursor(x + width / 2 + 2, y + 5 + i);
+        std::cout << DatabaseController::TypeToStr(structure.field_types[i]);
     }
+    tc_move_cursor(x + 2, y + height - 3);
+    printf("Rows count:    %10zu", rows);
+    tc_move_cursor(x + 2, y + height - 2);
+    printf("Deleted:       %10zu", deleted);
+    tc_move_cursor(1, 1);
+}
 
-
-    std::cout << "|\n";
-    std::cout << "+----------------------------------+\n"
-                 "|    1. Print                      |\n"
-                 "|    2. Insert                     |\n"
-                 "|    3. Delete                     |\n"
-                 "|    4. Search                     |\n"
-                 "|                                  |\n"
-                 "|    0. Save and exit              |\n"
-                 "+----------------------------------+\n";
+void Menu::DatabaseValues(DatabaseController & db, Structure structure) {
+    int x = 2, y = 12 + structure.field_names.size();
+    tc_move_cursor(x, y);
+    std::cout << "+------------------------------------------------------------------------+";
 }
 
 void Menu::PrintCreateMenu() {
@@ -532,4 +569,16 @@ void Menu::PrintCurrentStructure(std::vector<std::string> field_names,
                      " [" + DatabaseController::TypeToStr(field_types[i]) + "]";
     }
     std::cout << " |" << std::endl;
+}
+
+void Menu::PrintLine(int x, int y, int width) {
+    tc_move_cursor(x, y);
+
+    for (int i = 0; i < width; i++) {
+        if (i == 0 || i == width - 1) {
+            std::cout << "+";
+        } else {
+            std::cout << "-";
+        }
+    }
 }

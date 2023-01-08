@@ -7,7 +7,7 @@
 #include "common.h"
 #include "database_controller.h"
 
-// #define tc_move_cursor(X, Y) printf("\033[%d;%dH", Y, X);
+#define tc_move_cursor(X, Y) printf("\033[%d;%dH", Y, X);
 
 class Menu
 {
@@ -54,6 +54,10 @@ private:
 
     static void OpenDb(std::string filename, std::fstream &file, Structure structure);
     static void PrintDbMenu(std::string filename);
+    static void CommandPalette();
+    static void DatabaseParams(std::string filename, Structure structure,
+                               size_t rows, size_t deleted);
+    static void DatabaseValues(DatabaseController & db, Structure structure);
 
     static void PrintingSection(DatabaseController & db);
     static void InsertingSection(DatabaseController & db, Structure structure);
@@ -64,6 +68,7 @@ private:
 
     static int StrToInt(std::string str, int *status);
     static void ClearScreen();  // Clear console
+    static void PrintLine(int x, int y, int width);
 };
 
 #endif  // SRC_MENU_H_
