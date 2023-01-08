@@ -4,7 +4,7 @@
 #include <cstring>
 #include "database_controller.h"
 #include "file_handler.h"
-#include "Encoder.h"
+#include "encoder.h"
 
 DatabaseController::DatabaseController(std::string filename, Structure structure) {
     auto file_handler = FileHandler{};
